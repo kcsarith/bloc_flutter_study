@@ -1,4 +1,4 @@
-part of 'counter_cubit_cubit.dart';
+part of 'counter_cubit.dart';
 
 class CounterState {
   int counterValue;
