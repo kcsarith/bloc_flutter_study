@@ -77,13 +77,13 @@ class _MyHomePageState extends State<MyHomePage> {
         listener: (context, state) {
           if (state.wasIncremented == true) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('Yay, a snackbar!'),
-              duration: Duration(milliseconds: 1000),
+              content: Text('Incremented'),
+              duration: Duration(milliseconds: 300),
             ));
           } else {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('Yay, a snackbar!'),
-              duration: Duration(milliseconds: 1000),
+              content: Text('Decremented'),
+              duration: Duration(milliseconds: 300),
             ));
           }
         },
