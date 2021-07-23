@@ -1,4 +1,18 @@
 # bloc_flutter_study
+Cubits are a special kind of stream component that rebuild UI on state emitted by the stream.
+
+Functions are not a part of a stream but are a pre-baked list of what the Cubit can do. The stream part of it is hidden.
+
+Blocs on the otherhand do emit streams of state when it is triggered by events.
+
+## Questions to ask when creating a Cubit
+1. What is the initial state?
+    * submitting, completed
+2. What are the possible interactions?
+    * Buttons a screen for example
+3. What are the methods in the Cubit?
+    * login(), logout()
+
 # Basic Cubit template
 It's okay to start off with Cubits, it is basically Bloc lite. If you need to extend to Bloc, the main change is to add event.dart.
 ## Make a new folder for the Cubit
@@ -95,12 +109,12 @@ For Bloc, we would actually create a ```Stream<BlocState>``` called ```mapEventT
 ```dart
 // Bloc
 class TestBloc extends Bloc<TestEvent, TestState>{
-    TestCubit(): super(TestState(testInt: 0));
+    TestBloc(): super(TestState(testInt: 0));
 
     @override
     Stream<TestState> mapEventToState (TestEvent event, ) async* {
         if(event is TestIncrement){
-            yield TestCubit(event.testValue: +1);
+            yield TestBloc(event.testValue: +1);
         }
     }
 }
