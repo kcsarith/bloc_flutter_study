@@ -123,7 +123,44 @@ class TestBloc extends Bloc<TestEvent, TestState>{
 ## Triggering event
 Grabbing the Bloc from the context is the same as grabbing Blocs. There is only one simple change, instead of ```testCubit.increment()``` we  calling it ```testBloc.add(TestIncrement())```
 
+# Using Bloc on the app
+
+## BlocProvider/ MultiBlocProvider
+1. Dependency injection widget that will pass Bloc down the Widget Tree.
+2. New screens will NOT get the context or the provider.
+    * Need to do Route Access to provide Bloc to multiple screens.
+    * Pass in BlocProvider.value to pass the Bloc into newly created context.
+3. For global access for all widgets, including newly created widgets, wrap the Material App in BlocProvider
+```dart
+BlocProvider.value(
+    value: BlocProvider.of<Bloc>(context),
+    child: CurrentScreen();
+)
+```
+## BlocConsumer
+BlocListener and BlocBuilder
+
+# Communicating between two Blocs
+## Stream Subscription
+The foundations of listening to streams. They emit the initial state as soon as they are created.
+```Dart
+streamSubscription = testCubit.listen(
+    (testState){
+        if(testState is State1) increment();
+    }
+);
+```
+Remember to cancel the stream manually by overriding the close method, since it was created manually.
+
+```dart
+@override
+Future<void> close(){
+    streamSubscription.cancel();
+    return super.close();
+}
+```
+##
 # Repository
-If the app is going to connect with any asynchronous calls to a database or API from the internet, then this file helps organize the file structure. Most of the data here would be streams, sinks, and variables returned should be futures.
+If the app is going to communicate with the outer data layer such as asynchronous calls to a database or API from the internet, then this file helps organize the file structure. Most of the data here would be streams, sinks, and variables returned should be futures.
 
 Streams can bring 0, or multiple values, instead of 1 value from futures.
