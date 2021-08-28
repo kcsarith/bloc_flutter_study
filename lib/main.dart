@@ -1,19 +1,33 @@
-import 'dart:developer';
+import 'package:bloc_flutter_study/config/custom_router.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:gsheets/gsheets.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'cubit/counter_cubit.dart';
+import 'modules/home/cubit/counter_cubit.dart';
+import 'modules/home/screens/home_screen.dart';
+import 'modules/home/screens/second_screen.dart';
 
-void main() {
-  runApp(MyApp());
+void main() async {
+  initializeGSheets();
+  runApp(MyApp(
+    customRouter: CustomRouter(),
+    connectivity: Connectivity(),
+  ));
 }
 
 class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
+  final CustomRouter customRouter;
+  final Connectivity connectivity;
+
+  const MyApp(
+      {Key key, @required this.customRouter, @required this.connectivity})
+      : super(key: key);
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
+    return BlocProvider<CounterCubit>(
       create: (context) => CounterCubit(),
       child: MaterialApp(
         title: 'Flutter Demo',
@@ -21,130 +35,66 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.blue,
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        home: MyHomePage(title: 'Flutter Demo Home Page'),
+        onGenerateRoute: customRouter.onGenerateRoute,
       ),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+void initializeGSheets() async {
+  await dotenv.load(fileName: ".env");
+  String _spreadsheetId = dotenv.env['SPREADSHEET_ID'];
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
+  var _credentials = '''{    "type": "${dotenv.env['TYPE']}",
+    "project_id": "${dotenv.env['PROJECT_ID']}",
+    "private_key_id": "${dotenv.env['PRIVATE_KEY_ID']}",
+    "private_key": "${dotenv.env['PRIVATE_KEY']}",
+    "client_email": "${dotenv.env['CLIENT_EMAIL']}",
+    "client_id": "${dotenv.env['CLIENT_ID']}",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_x509_cert_url": "${dotenv.env['CLIENT_X509_CERT_URL']}"}''';
 
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
+  // init GSheets
+  final gsheets = GSheets(_credentials);
+  // fetch spreadsheet by its id
+  final ss = await gsheets.spreadsheet(_spreadsheetId);
+  // get worksheet by its title
+  final sheet = ss.worksheetByTitle('Sheet1');
 
-  final String title;
+  Future<void> basic() async {
+    // prints - [100, Product A, 50, 100.0]
+    print(await sheet.values.row(2));
 
-  @override
-  _MyHomePageState createState() => _MyHomePageState();
-}
+    // prints - [Product A, Product B, Product C, Product D, Product F, Product G]
+    // we use 'fromRow' to skip first row
+    print(await sheet.values.column(2, fromRow: 2));
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+    // prints - Product A
+    print(await sheet.values.value(row: 2, column: 2));
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: BlocListener<CounterCubit, CounterState>(
-        listener: (context, state) {
-          if (state.wasIncremented == true) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('Incremented'),
-              duration: Duration(milliseconds: 300),
-            ));
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('Decremented'),
-              duration: Duration(milliseconds: 300),
-            ));
-          }
-        },
-        child: Center(
-          // Center is a layout widget. It takes a single child and positions it
-          // in the middle of the parent.
-          child: Column(
-            // Column is also a layout widget. It takes a list of children and
-            // arranges them vertically. By default, it sizes itself to fit its
-            // children horizontally, and tries to be as tall as its parent.
-            //
-            // Invoke "debug painting" (press "p" in the console, choose the
-            // "Toggle Debug Paint" action from the Flutter Inspector in Android
-            // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-            // to see the wireframe for each widget.
-            //
-            // Column has various properties to control how it sizes itself and
-            // how it positions its children. Here we use mainAxisAlignment to
-            // center the children vertically; the main axis here is the vertical
-            // axis because Columns are vertical (the cross axis would be
-            // horizontal).
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Text(
-                'You have pushed the button this many times:',
-              ),
-              BlocBuilder<CounterCubit, CounterState>(
-                builder: (context, state) {
-                  return Text(
-                    state.counterValue.toString(),
-                    style: Theme.of(context).textTheme.headline4,
-                  );
-                },
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: <Widget>[
-                  FloatingActionButton(
-                    onPressed: () =>
-                        {BlocProvider.of<CounterCubit>(context).decrement()},
-                    tooltip: 'Decrement',
-                    child: Icon(Icons.remove),
-                  ),
-                  FloatingActionButton(
-                    onPressed: () => {
-                      {BlocProvider.of<CounterCubit>(context).increment()},
-                    },
-                    tooltip: 'Increment',
-                    child: Icon(Icons.add),
-                  )
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+    // inserts passed values into second row
+    await sheet.values.insertRow(
+      2,
+      [200, 'Ex Product A', 60, 110.0],
     );
+
+    // updates B2 cell by inserting passed value
+    await sheet.values.insertValue(
+      'Product A',
+      row: 2,
+      column: 2,
+    );
+
+    // appends passed values to the products table
+    await sheet.values.appendRow(
+      [200, 'Ex Product A', 60, 110.0],
+    );
+
+    // deletes row #8
+    // await sheet.deleteRow(8);
   }
+
+  await basic();
 }
